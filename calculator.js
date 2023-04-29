@@ -12,7 +12,7 @@ const numberNames = {
     0: 'zero',
     '.': 'dot'
 }
-const operations = ['C', '<', '+', '-', '÷', '*', '=']
+const operations = ['C', '<', '-', '+', '÷', '*', '=']
 const operatorNames = {
     '+': 'addition',
     '-': 'substraction',
@@ -73,7 +73,7 @@ function addListenersToNumberButtons(btn) {
         && operator.length < 1          //if the operator has not been pressed then there is only one number on display
         ||
         (button.textContent === '.'
-        && displayString.slice(displayString.indexOf(operator)).includes('.'))  //Checks if there is a dot in the second number
+            && displayString.slice(displayString.lastIndexOf(operator)).includes('.'))  //Checks if there is a dot in the second number
         && operator.length > 0) { //if the operator has been pressed then there is a second number(might be empty)
     }
 
@@ -86,6 +86,9 @@ function addListenersToNumberButtons(btn) {
     }
 }
 
+//should be possible for '-' to follow operators [+, *, /]
+//if there is already an active operator and it's not '-' and the button pressed IS '-' and the last symbol in string is not '-' => add '-' to string
+
 function addListenersToOperatorButtons(btn) {
 
     let button = document.querySelector(`.${btn}`)
@@ -95,9 +98,6 @@ function addListenersToOperatorButtons(btn) {
         operate(operator)
     }
 
-    //if an operator has NOT been pressed => leave everything as is
-    else if (button.textContent === '=' && operator.length == 0) {
-    }
 
     //if C is pressed => call clear()
     else if (button.textContent === 'C') {
@@ -109,10 +109,47 @@ function addListenersToOperatorButtons(btn) {
         backspace()
     }
 
-    //if one of ['+', '-', '÷', '*'] buttons was pressed AND the last symbol of displayString IS an operator
+    //add '-' after another operator (basically make second number negative)
+    else if (operations.slice(3).includes(displayString[displayString.length - 1])
+        && numbers.includes(+displayString[displayString.length - 2])
+        && button.textContent == '-'
+    ) {
+        console.log('stage 4')
+        displayString += '-'
+        display.textContent = displayString
+    }
+
+    /*
+        +('bla')
+        if 'bla'+5<0 => don't add '-
+
+        123+-(-) => 123+- (don't do anything)     second number is not a number && 
+        123+.(-) => 123+. (don't do anything)     second number is not a number ; there is a '.' after operator
+        123+-.(-) => 123+-. (don't do anything)   second number is not a number ; there is a '.' after operator
+        123-(-) =>  123-  (don't do anything)     second number is empty && button pressed == operator
+        123*(*) => 123*     (don't do anything)   second number is empty && button pressed == operator
+
+        123-(+) => 123+     (change operator)     second number is not a number
+
+        123+1(-) => 124     (perform operation)
+        123+-1(-) => 122    (perform operation)
+        123+1.(-) => 124    (perform operation)     last digit is not a number ; there is a '.' after operator
+
+    */
+
+    //if an operator has NOT been pressed OR if second number is NaN OR if second number is empty && button pressed == operator => leave everything as is
+    else if (button.textContent === '=' && operator.length == 0
+        ||
+        isNaN(displayString.slice(displayString.lastIndexOf(operator) + 1))
+        ||
+        displayString.slice(displayString.lastIndexOf(operator) + 1) == '' && button.textContent == operator) {
+    }
+
+    //if one of ['+', '÷', '*'] buttons was pressed AND the last symbol of displayString IS an operator
     //  => replace the operator in the string and the variable
-    else if (operations.slice(2, operations.length - 1).includes(button.textContent)
+    else if (operations.slice(3, operations.length - 1).includes(button.textContent)
         && isNaN(displayString[displayString.length - 1])) {
+        console.log('stage 5')
         operator = button.textContent
         displayString = displayString.slice(0, -1) + operator
         display.textContent = displayString
@@ -121,6 +158,8 @@ function addListenersToOperatorButtons(btn) {
     //in all other cases call operate(), update the operator
     //and add the new operator to displayString(which now is the result of operation)
     else {
+        console.log('stage 6')
+
         operate(operator)
         operator = button.textContent
         displayString += operator
@@ -130,8 +169,14 @@ function addListenersToOperatorButtons(btn) {
 
 //finds the numbers before and after the operator 
 function findNumbers() {
-    firstNumber = +displayString.slice(0, displayString.indexOf(operator))
-    secondNumber = +displayString.slice(displayString.indexOf(operator) + 1)
+    firstNumber = +displayString.slice(0, displayString.lastIndexOf(operator))
+    secondNumber = +displayString.slice(displayString.lastIndexOf(operator) + 1)
+    if (isNaN(secondNumber)) {
+        secondNumber = 0
+    }
+    console.log(firstNumber)
+    console.log(secondNumber)
+
 }
 
 //replaces displayString with '0' and updates operator
@@ -143,8 +188,9 @@ function clear() {
 
 function backspace() {
 
-    // if the las symbol in display string is an operator => remove last symbol and update operator value
-    if (operations.slice(2, operations.length - 1).includes(displayString[displayString.length - 1])) {
+    // if the las symbol in display string is THE operator => remove last symbol and update operator value
+    if (operations.slice(2, operations.length - 1).includes(displayString[displayString.length - 1])
+        && displayString[displayString.length - 1] == operator) {
         displayString = displayString.slice(0, displayString.length - 1)
         operator = ''
         display.textContent = displayString
@@ -167,22 +213,23 @@ function backspace() {
 }
 
 function operate(op) {
-
+    console.log(op)
     findNumbers()
     let result = 0
 
     if (op === '+') {
         result = +firstNumber + secondNumber
         updateResults(result)
-    } 
+    }
     else if (op === '-') {
+        console.log('substract')
         result = +firstNumber - secondNumber
         updateResults(result)
-    } 
+    }
     else if (op === '*') {
         result = +firstNumber * secondNumber
         updateResults(result)
-    } 
+    }
     else if (op === '÷') {
         result = +firstNumber / secondNumber
         updateResults(result)
@@ -190,6 +237,7 @@ function operate(op) {
 }
 
 function updateResults(num) {
+    console.log('updated')
     displayString = num.toString()
     display.textContent = displayString
     operator = ''
