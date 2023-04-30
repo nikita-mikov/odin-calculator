@@ -1,29 +1,36 @@
-const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, '.', 0];
+const numbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0'];
 const numberNames = {
-    1: 'one',
-    2: 'two',
-    3: 'three',
-    4: 'four',
-    5: 'five',
-    6: 'six',
-    7: 'seven',
-    8: 'eight',
-    9: 'nine',
-    0: 'zero',
+    '1': 'one',
+    '2': 'two',
+    '3': 'three',
+    '4': 'four',
+    '5': 'five',
+    '6': 'six',
+    '7': 'seven',
+    '8': 'eight',
+    '9': 'nine',
+    '0': 'zero',
     '.': 'dot'
 }
-const operations = ['C', '<', '-', '+', '÷', '*', '=']
-const operatorNames = {
+const actionSymbols = ['C', '<', '-', '+', '/', '*', '=']
+const actionNames = {
     '+': 'addition',
     '-': 'substraction',
     '*': 'multiplication',
-    '÷': 'division',
     'C': 'clear',
     '<': 'backspace',
-    '=': 'equals'
+    '=': 'equals',
+    '/': 'division'
 }
-const buttons = document.querySelector('.buttons')
+
+const allOperators = actionSymbols.slice(2, actionSymbols.length - 1)
+const operatorsExceptMinus = actionSymbols.slice(3, actionSymbols.length - 1)
+
+const numberButtons = document.querySelector('.numbers')
+const operatorButtons = document.querySelector('.actionSymbols')
 const display = document.querySelector('.display')
+
+
 
 let displayString = '0'
 let firstNumber = 0
@@ -33,32 +40,50 @@ display.textContent = displayString
 
 for (let i = 0; i < numbers.length; i++) {
 
-    let numberButtons = buttons.querySelector('.numbers')
     let button = numberButtons.appendChild(document.createElement('div'))
 
     button.setAttribute('class', `${numberNames[numbers[i]]} flex jc-center ai-center`)
     button.textContent = numbers[i]
 
     button.addEventListener('click', function () {
-        addListenersToNumberButtons(numberNames[numbers[i]])
+        showNumberOnDisplay(numberNames[numbers[i]])
     })
 }
 
-for (let i = 0; i < operations.length; i++) {
+for (let i = 0; i < actionSymbols.length; i++) {
 
-    let operatorButtons = buttons.querySelector('.operations')
     let button = operatorButtons.appendChild(document.createElement('div'))
 
-    button.setAttribute('class', `${operatorNames[operations[i]]} flex jc-center ai-center`)
-    button.textContent = operations[i]
+    button.setAttribute('class', `${actionNames[actionSymbols[i]]} flex jc-center ai-center`)
+    button.textContent = actionSymbols[i]
     button.addEventListener('click', function () {
-        addListenersToOperatorButtons(operatorNames[operations[i]])
+        showOperatorOnDisplay(actionNames[actionSymbols[i]])
     })
 }
 
-function addListenersToNumberButtons(btn) {
+
+window.addEventListener('keydown', function(e){
+    let pressedKey = e.key
+    console.log(pressedKey)
+    if(numbers.includes(pressedKey)){
+        showNumberOnDisplay(numberNames[pressedKey])
+    } else if (pressedKey === 'Backspace'){
+        pressedKey = '<'
+        showOperatorOnDisplay(actionNames[pressedKey])
+    } else if (pressedKey === 'Enter'){
+        pressedKey = '='
+        showOperatorOnDisplay(actionNames[pressedKey])
+    }
+    else if(actionSymbols.includes(pressedKey.toUpperCase())){
+        showOperatorOnDisplay(actionNames[pressedKey.toUpperCase()])
+    }
+})
+
+
+function showNumberOnDisplay(btn) {
 
     let button = document.querySelector(`.${btn}`)
+    let stringAfterOperator = displayString.slice(displayString.lastIndexOf(operator))
 
     //if displayString is '0' and a number (NOT '.') is pressed => change displayString to the number pressed
     if (displayString == '0' && button.textContent !== '.') {
@@ -73,7 +98,7 @@ function addListenersToNumberButtons(btn) {
         && operator.length < 1          //if the operator has not been pressed then there is only one number on display
         ||
         (button.textContent === '.'
-            && displayString.slice(displayString.lastIndexOf(operator)).includes('.'))  //Checks if there is a dot in the second number
+        && stringAfterOperator.includes('.'))  //Checks if there is a dot in the second number
         && operator.length > 0) { //if the operator has been pressed then there is a second number(might be empty)
     }
 
@@ -89,9 +114,13 @@ function addListenersToNumberButtons(btn) {
 //should be possible for '-' to follow operators [+, *, /]
 //if there is already an active operator and it's not '-' and the button pressed IS '-' and the last symbol in string is not '-' => add '-' to string
 
-function addListenersToOperatorButtons(btn) {
+function showOperatorOnDisplay(btn) {
 
     let button = document.querySelector(`.${btn}`)
+    let lastDigitOnDisplay = displayString[displayString.length - 1]
+    let secondToLastDigitOnDisplay = displayString[displayString.length - 2]
+    let stringAfterOperator = displayString.slice(displayString.lastIndexOf(operator) + 1)
+    
 
     //if an operator HAS been pressed => perform operation
     if (button.textContent === '=' && operator.length > 0) {
@@ -110,8 +139,8 @@ function addListenersToOperatorButtons(btn) {
     }
 
     //add '-' after another operator (basically make second number negative)
-    else if (operations.slice(3).includes(displayString[displayString.length - 1])
-        && numbers.includes(+displayString[displayString.length - 2])
+    else if (operatorsExceptMinus.includes(lastDigitOnDisplay)
+        && numbers.includes(secondToLastDigitOnDisplay)
         && button.textContent == '-'
     ) {
         console.log('stage 4')
@@ -140,15 +169,15 @@ function addListenersToOperatorButtons(btn) {
     //if an operator has NOT been pressed OR if second number is NaN OR if second number is empty && button pressed == operator => leave everything as is
     else if (button.textContent === '=' && operator.length == 0
         ||
-        isNaN(displayString.slice(displayString.lastIndexOf(operator) + 1))
+        isNaN(stringAfterOperator)
         ||
-        displayString.slice(displayString.lastIndexOf(operator) + 1) == '' && button.textContent == operator) {
+        stringAfterOperator == '' && button.textContent == operator) {
     }
 
     //if one of ['+', '÷', '*'] buttons was pressed AND the last symbol of displayString IS an operator
     //  => replace the operator in the string and the variable
-    else if (operations.slice(3, operations.length - 1).includes(button.textContent)
-        && isNaN(displayString[displayString.length - 1])) {
+    else if (operatorsExceptMinus.includes(button.textContent)
+        && isNaN(lastDigitOnDisplay)) {
         console.log('stage 5')
         operator = button.textContent
         displayString = displayString.slice(0, -1) + operator
@@ -188,9 +217,11 @@ function clear() {
 
 function backspace() {
 
+    let lastDigitOnDisplay = displayString[displayString.length - 1]
+
     // if the las symbol in display string is THE operator => remove last symbol and update operator value
-    if (operations.slice(2, operations.length - 1).includes(displayString[displayString.length - 1])
-        && displayString[displayString.length - 1] == operator) {
+    if (allOperators.includes(lastDigitOnDisplay)
+        && lastDigitOnDisplay == operator) {
         displayString = displayString.slice(0, displayString.length - 1)
         operator = ''
         display.textContent = displayString
@@ -230,7 +261,7 @@ function operate(op) {
         result = +firstNumber * secondNumber
         updateResults(result)
     }
-    else if (op === '÷') {
+    else if (op === '/') {
         result = +firstNumber / secondNumber
         updateResults(result)
     }

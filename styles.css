@@ -48,7 +48,7 @@ body{
     width: 100%;
 }
 
-.numbers, .operations{
+.numbers, .actionSymbols{
     height: 100%;
     box-sizing: border-box;
     padding: 10px;
@@ -61,12 +61,12 @@ body{
     width: 60%;
 }
 
-.operations{
+.actionSymbols{
     width: 40%;
     color: black;
 }
 
-.numbers>*, .operations>*{
+.numbers>*, .actionSymbols>*{
     flex-grow: 1;
     border-radius: 20px;
     min-height: 20%;
@@ -78,7 +78,7 @@ div.numbers>*{
     width: 30%;
 }
 
-div.operations > *{
+div.actionSymbols > *{
     width: 40%;
     background-color: rgb(180, 180, 180);
 }
