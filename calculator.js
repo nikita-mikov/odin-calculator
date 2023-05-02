@@ -1,3 +1,6 @@
+//Need to add limit on amount of characters that the user is able to enter
+
+
 const numbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0'];
 const numberNames = {
     '1': 'one',
@@ -83,10 +86,11 @@ window.addEventListener('keydown', function(e){
 function showNumberOnDisplay(btn) {
 
     let button = document.querySelector(`.${btn}`)
-    let stringAfterOperator = displayString.slice(displayString.lastIndexOf(operator))
+    let stringAfterOperator = displayString.slice(displayString.lastIndexOf(operator) + 1)
+    let stringBeforeOperator = displayString.slice(0, displayString.lastIndexOf(operator))
 
     //if displayString is '0' and a number (NOT '.') is pressed => change displayString to the number pressed
-    if (displayString == '0' && button.textContent !== '.') {
+    if (displayString == '0' && button.textContent !== '.' || displayString === 'Error') {
         displayString = button.textContent
         display.textContent = displayString
     }
@@ -99,7 +103,15 @@ function showNumberOnDisplay(btn) {
         ||
         (button.textContent === '.'
         && stringAfterOperator.includes('.'))  //Checks if there is a dot in the second number
-        && operator.length > 0) { //if the operator has been pressed then there is a second number(might be empty)
+        && operator.length > 0
+        ||
+        operator.length < 1
+        && Math.abs(displayString).toString().length >= 7
+        ||
+        operator.length > 0
+        && Math.abs(stringAfterOperator).toString().length >= 7
+        ||
+        stringBeforeOperator.length + stringAfterOperator.length >= 16) { //if the operator has been pressed then there is a second number(might be empty)
     }
 
     //in all other cases add the number (OR '.') of the button to the string
@@ -138,12 +150,18 @@ function showOperatorOnDisplay(btn) {
         backspace()
     }
 
+    else if(displayString === 'Error'){
+        displayString = `0${button.textContent}`
+        display.textContent = displayString
+        operator = button.textContent
+    }
+
     //add '-' after another operator (basically make second number negative)
     else if (operatorsExceptMinus.includes(lastDigitOnDisplay)
         && numbers.includes(secondToLastDigitOnDisplay)
         && button.textContent == '-'
     ) {
-        console.log('stage 4')
+        console.log('stage 3')
         displayString += '-'
         display.textContent = displayString
     }
@@ -172,6 +190,7 @@ function showOperatorOnDisplay(btn) {
         isNaN(stringAfterOperator)
         ||
         stringAfterOperator == '' && button.textContent == operator) {
+            console.log('stage 4')
     }
 
     //if one of ['+', '÷', '*'] buttons was pressed AND the last symbol of displayString IS an operator
@@ -268,8 +287,21 @@ function operate(op) {
 }
 
 function updateResults(num) {
+    let absoluteNum = Math.abs(num).toString()
+    if(num.toString()[0] == 'I'){
+        displayString = 'Error'
+        display.textContent = displayString
+        operator = ''
+    } 
+    else if(Math.abs(num)>=10000000 ){
+        displayString = Math.round(num/`1e${absoluteNum.length-1}`) + 'e'+ absoluteNum.slice(1).length
+        display.textContent = displayString
+        operator = ''
+    }
+    else {
+        displayString = num.toString()
+        display.textContent = displayString
+        operator = ''}
+
     console.log('updated')
-    displayString = num.toString()
-    display.textContent = displayString
-    operator = ''
 }
